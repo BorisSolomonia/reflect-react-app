@@ -31,11 +31,10 @@ pipeline {
                 }
             }
         }
-
         stage('Deploy') {
             steps {
                 script {
-                    sh "sed -i 's|gcr.io/reflection01-431417/reflect-react-app:latest|gcr.io/${PROJECT_ID}/reflect-react-app:${COMMIT_SHA}|g' react-frontend-deployment.yaml"
+                    sh "sed -i 's|gcr.io/${PROJECT_ID}/reflect-react-app:latest|gcr.io/${PROJECT_ID}/reflect-react-app:${COMMIT_SHA}|g' react-frontend-deployment.yaml"
                     withCredentials([file(credentialsId: "${GC_KEY}", variable: 'GC_KEY_FILE')]) {
                         sh '''
                             gcloud auth activate-service-account --key-file=${GC_KEY_FILE}
