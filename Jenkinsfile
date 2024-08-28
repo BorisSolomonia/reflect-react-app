@@ -18,11 +18,14 @@ pipeline {
         }
         stage('Build and Push Image') {
             steps {
-                withCredentials([file(credentialsId: "${GC_KEY}", variable: 'GC_KEY_FILE')]) {
-                    script {
-                        def commitSha = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                script {
+                    // Fetch the short commit SHA
+                    def commitSha = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                    withCredentials([file(credentialsId: "${GC_KEY}", variable: 'GC_KEY_FILE')]) {
                         withEnv(["GOOGLE_APPLICATION_CREDENTIALS=${GC_KEY_FILE}", "COMMIT_SHA=${commitSha}", "PROJECT_ID=${PROJECT_ID}"]) {
                             sh "gcloud auth activate-service-account --key-file=${GC_KEY_FILE} --verbosity=info"
+                            
+                            // Trigger Google Cloud Build with substitutions
                             sh '''
                             gcloud builds submit --config=cloudbuild.yaml --substitutions=_COMMIT_SHA=${COMMIT_SHA}
                             '''
@@ -34,8 +37,10 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
+                    // Update the Kubernetes deployment file with the correct image URL
                     sh "sed -i 's|gcr.io/${PROJECT_ID}/reflect-react-app:latest|gcr.io/${PROJECT_ID}/reflect-react-app:${COMMIT_SHA}|g' react-frontend-deployment.yaml"
                     withCredentials([file(credentialsId: "${GC_KEY}", variable: 'GC_KEY_FILE')]) {
+                        // Authenticate using gcloud and deploy the updated image
                         sh '''
                             gcloud auth activate-service-account --key-file=${GC_KEY_FILE}
                             gcloud config set project ${PROJECT_ID}
