@@ -17,8 +17,10 @@ spec:
       containers:
       - name: reflect-react-app
         image: gcr.io/reflection01-431417/reflect-react-app:latest
+        imagePullPolicy: Always  # This line ensures Kubernetes pulls the latest image every time
         ports:
         - containerPort: 80
+
 ---
 
 apiVersion: v1
