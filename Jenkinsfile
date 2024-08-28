@@ -13,7 +13,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/BorisSolomonia/reflect_4.git', branch: 'master', credentialsId: "${GIT_CREDENTIALS_ID}"
+                git url: 'https://github.com/BorisSolomonia/reflect-react-app.git', branch: 'master', credentialsId: "${GIT_CREDENTIALS_ID}"
             }
         }
         stage('Build and Push Image') {
@@ -21,14 +21,13 @@ pipeline {
                 withCredentials([file(credentialsId: "${GC_KEY}", variable: 'GC_KEY_FILE')]) {
                     script {
                         withEnv(["GOOGLE_APPLICATION_CREDENTIALS=${GC_KEY_FILE}"]) {
-                            sh "gcloud auth activate-service-account --key-file=${GC_KEY_FILE} --verbosity=debug"
-                            sh 'gcloud auth configure-docker'
+                            sh "gcloud auth activate-service-account --key-file=${GC_KEY_FILE} --verbosity=info"
+                            
+                            // Trigger Google Cloud Build
+                            sh '''
+                            gcloud builds submit --config=cloudbuild.yaml --substitutions=_PROJECT_ID=${PROJECT_ID},_TAG_NAME=latest
+                            '''
                         }
-                        // Build the React app and create a Docker image
-                        sh '''
-                            docker build -t ${REPO_URL}/reflect_4:latest .
-                            docker push ${REPO_URL}/reflect_4:latest
-                        '''
                     }
                 }
             }
@@ -37,7 +36,7 @@ pipeline {
             steps {
                 script {
                     // Update the Kubernetes deployment file with the correct image URL
-                    sh "sed -i 's|IMAGE_URL|${REPO_URL}/reflect_4:latest|g' react-frontend-deployment.yaml"
+                    sh "sed -i 's|IMAGE_URL|${REPO_URL}/reflect-react-app:latest|g' react-frontend-deployment.yaml"
                     withCredentials([file(credentialsId: "${GC_KEY}", variable: 'GC_KEY_FILE')]) {
                         sh '''
                             gcloud container clusters get-credentials ${CLUSTER} --zone ${ZONE} --project ${PROJECT_ID}
