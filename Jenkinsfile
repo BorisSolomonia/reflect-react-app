@@ -7,8 +7,9 @@ pipeline {
         PROJECT_ID = 'reflection01-431417'
         ARTIFACT_REGISTRY = 'reflection-artifacts'
         CLUSTER = 'reflection-cluster-1'
-        ZONE = 'us-central1'  // Ensure this matches the zone where your cluster is located
+        ZONE = 'us-central1'
         REPO_URL = "${REGISTRY_URI}/${PROJECT_ID}/${ARTIFACT_REGISTRY}"
+        TAG_NAME = 'latest'  // or any other tag you prefer
     }
     stages {
         stage('Checkout') {
@@ -23,9 +24,9 @@ pipeline {
                         withEnv(["GOOGLE_APPLICATION_CREDENTIALS=${GC_KEY_FILE}"]) {
                             sh "gcloud auth activate-service-account --key-file=${GC_KEY_FILE} --verbosity=info"
                             
-                            // Trigger Google Cloud Build without substitutions
+                            // Trigger Google Cloud Build with substitutions
                             sh '''
-                            gcloud builds submit --config=cloudbuild.yaml
+                            gcloud builds submit --config=cloudbuild.yaml --substitutions=_PROJECT_ID=${PROJECT_ID},_TAG_NAME=${TAG_NAME}
                             '''
                         }
                     }
@@ -36,7 +37,7 @@ pipeline {
             steps {
                 script {
                     // Update the Kubernetes deployment file with the correct image URL
-                    sh "sed -i 's|borissolomonia/reflect-react-app:latest|gcr.io/${PROJECT_ID}/reflect-react-app:latest|g' react-frontend-deployment.yaml"
+                    sh "sed -i 's|borissolomonia/reflect-react-app:latest|gcr.io/${PROJECT_ID}/reflect-react-app:${TAG_NAME}|g' react-frontend-deployment.yaml"
                     withCredentials([file(credentialsId: "${GC_KEY}", variable: 'GC_KEY_FILE')]) {
                         // Authenticate using gcloud
                         sh '''
