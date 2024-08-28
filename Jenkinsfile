@@ -9,23 +9,27 @@ pipeline {
         CLUSTER = 'reflection-cluster-1'
         ZONE = 'us-central1'
         REPO_URL = "${REGISTRY_URI}/${PROJECT_ID}/${ARTIFACT_REGISTRY}"
+        // Define COMMIT_SHA at the global environment level
+        COMMIT_SHA = ''
     }
     stages {
         stage('Checkout') {
             steps {
+                script {
+                    // Fetch the commit SHA and store it in the environment variable
+                    COMMIT_SHA = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                }
                 git url: 'https://github.com/BorisSolomonia/reflect-react-app.git', branch: 'master', credentialsId: "${GIT_CREDENTIALS_ID}"
             }
         }
         stage('Build and Push Image') {
             steps {
-                script {
-                    // Fetch the short commit SHA
-                    def commitSha = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-                    withCredentials([file(credentialsId: "${GC_KEY}", variable: 'GC_KEY_FILE')]) {
-                        withEnv(["GOOGLE_APPLICATION_CREDENTIALS=${GC_KEY_FILE}", "COMMIT_SHA=${commitSha}", "PROJECT_ID=${PROJECT_ID}"]) {
+                withCredentials([file(credentialsId: "${GC_KEY}", variable: 'GC_KEY_FILE')]) {
+                    script {
+                        withEnv(["GOOGLE_APPLICATION_CREDENTIALS=${GC_KEY_FILE}", "COMMIT_SHA=${COMMIT_SHA}", "PROJECT_ID=${PROJECT_ID}"]) {
                             sh "gcloud auth activate-service-account --key-file=${GC_KEY_FILE} --verbosity=info"
                             
-                            // Trigger Google Cloud Build with substitutions
+                            // Trigger Google Cloud Build with the COMMIT_SHA substitution
                             sh '''
                             gcloud builds submit --config=cloudbuild.yaml --substitutions=_COMMIT_SHA=${COMMIT_SHA}
                             '''
