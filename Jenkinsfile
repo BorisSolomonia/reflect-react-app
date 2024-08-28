@@ -23,9 +23,9 @@ pipeline {
                         withEnv(["GOOGLE_APPLICATION_CREDENTIALS=${GC_KEY_FILE}"]) {
                             sh "gcloud auth activate-service-account --key-file=${GC_KEY_FILE} --verbosity=info"
                             
-                            // Trigger Google Cloud Build
+                            // Trigger Google Cloud Build without substitutions
                             sh '''
-                            gcloud builds submit --config=cloudbuild.yaml --substitutions=_PROJECT_ID=${PROJECT_ID},_TAG_NAME=latest
+                            gcloud builds submit --config=cloudbuild.yaml
                             '''
                         }
                     }
@@ -36,7 +36,7 @@ pipeline {
             steps {
                 script {
                     // Update the Kubernetes deployment file with the correct image URL
-                    sh "sed -i 's|IMAGE_URL|${REPO_URL}/reflect-react-app:latest|g' react-frontend-deployment.yaml"
+                    sh "sed -i 's|borissolomonia/reflect-react-app:latest|gcr.io/${PROJECT_ID}/reflect-react-app:latest|g' react-frontend-deployment.yaml"
                     withCredentials([file(credentialsId: "${GC_KEY}", variable: 'GC_KEY_FILE')]) {
                         sh '''
                             gcloud container clusters get-credentials ${CLUSTER} --zone ${ZONE} --project ${PROJECT_ID}
