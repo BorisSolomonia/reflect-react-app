@@ -15,7 +15,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/BorisSolomonia/brooks-front-react.git', branch: 'master', credentialsId: "${GIT_CREDENTIALS_ID}"
+                git url: 'https://github.com/BorisSolomonia/reflect-react-app.git', branch: 'master', credentialsId: "${GIT_CREDENTIALS_ID}"
                 script {
                     COMMIT_SHA = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
                     def commitMessage = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
