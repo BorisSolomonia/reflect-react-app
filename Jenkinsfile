@@ -15,10 +15,10 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                script {
-                    // Fetch the commit SHA and store it in the environment variable
-                    COMMIT_SHA = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-                }
+                // script {
+                //     // Fetch the commit SHA and store it in the environment variable
+                //     COMMIT_SHA = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                // }
                 git url: 'https://github.com/BorisSolomonia/reflect-react-app.git', branch: 'master', credentialsId: "${GIT_CREDENTIALS_ID}"
             }
         }
