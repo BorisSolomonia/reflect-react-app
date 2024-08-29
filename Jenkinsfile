@@ -14,12 +14,22 @@ pipeline {
     }
     stages {
         stage('Checkout') {
+            // steps {
+            //     // script {
+            //     //     // Fetch the commit SHA and store it in the environment variable
+            //     //     COMMIT_SHA = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+            //     // }
+            //     git url: 'https://github.com/BorisSolomonia/reflect-react-app.git', branch: 'master', credentialsId: "${GIT_CREDENTIALS_ID}"
+            // }
             steps {
-                // script {
-                //     // Fetch the commit SHA and store it in the environment variable
-                //     COMMIT_SHA = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-                // }
+        // First, perform the git checkout
                 git url: 'https://github.com/BorisSolomonia/reflect-react-app.git', branch: 'master', credentialsId: "${GIT_CREDENTIALS_ID}"
+        
+        // Then, fetch the commit SHA after the checkout
+                script {
+                    COMMIT_SHA = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                    echo "Checked out commit: ${COMMIT_SHA}"
+                }
             }
         }
         stage('Build and Push Image') {
